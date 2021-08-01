@@ -1,0 +1,9 @@
+{
+    "excelFilePath": "excels/demo.xlsx",
+    "backUpPath": "backup/",
+    "backupFilePath": "backup/demo.xlsx",
+    "backupAfter": 50,
+    "startingPosition": 22,
+    "endingPosition": 9999,
+    "findUrl": 0
+}

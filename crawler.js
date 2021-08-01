@@ -1,12 +1,17 @@
 const puppeteer = require('puppeteer');
+const fs = require('fs');
 const { performance } = require('perf_hooks');
-
+const config = require('./config.json');
 const excel = require('./excel');
+
+// Ignore Control+C from this file
+process.on('SIGINT', function () {});
 
 let index = 1;
 let endVal = 9999;
 let $anchor;
 let text;
+let timesRan = 0;
 
 const URLS = 'https://www.skroutz.gr';
 const t0 = performance.now();
@@ -14,20 +19,43 @@ const t0 = performance.now();
 let execTimes = [];
 let timeStamps = [];
 
-const searchUrls = process.argv.indexOf('-findurl') !== -1;
+const searchUrls =
+  process.argv.indexOf('-findurl') !== -1 || config.findUrl !== 0;
 console.log('searchUrls', searchUrls);
 const hasStartPos = process.argv.indexOf('-spos');
 console.log(process.argv);
 console.log(hasStartPos);
 if (hasStartPos !== -1) {
   index = process.argv[hasStartPos + 1];
+} else if (config.startingPosition) {
+  index = config.startingPosition;
 }
 const hasEndPos = process.argv.indexOf('-epos');
 console.log(process.argv);
 console.log(hasEndPos);
 if (hasEndPos !== -1) {
   endVal = process.argv[hasEndPos + 1];
+} else if (config.endingPosition) {
+  endVal = config.endingPosition;
 }
+
+const backUpFile = () => {
+  if (!fs.existsSync(config.backUpPath, { recursive: true })) {
+    fs.mkdirSync(config.backUpPath);
+  }
+  try {
+    fs.copyFileSync(config.excelFilePath, config.backupFilePath, (err) => {
+      if (err) {
+        console.log('Error while trying to backup', err);
+      }
+      console.log(
+        `${config.excelFilePath} was copied to ${config.backupFilePath}`
+      );
+    });
+  } catch (err) {
+    console.log('Error while trying to backup file', err);
+  }
+};
 
 const crawl = () => {
   console.log('starting row is: ', index);
@@ -304,6 +332,10 @@ async function getDataFromUrl() {
     await getLowestPrices();
     await browser.close();
     await timeLog();
+    timesRan += 1;
+    if (timesRan % config.backupAfter === 0) {
+      backUpFile();
+    }
     index++;
     crawl();
   } catch (error) {
@@ -401,6 +433,10 @@ async function getUrlFromSku() {
 
     await browser.close();
     await timeLog();
+    timesRan += 1;
+    if (timesRan % config.backupAfter === 0) {
+      backUpFile();
+    }
     index++;
     crawl();
   } catch (error) {

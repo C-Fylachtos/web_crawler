@@ -1,6 +1,24 @@
 const Excel = require('exceljs');
+const config = require('./config.json');
+// log_in(config.username, config.password);
+console.log('configgg', config);
 
-async function writeRow(rowNumber, rowData) {
+let isExcelFnRunning = false;
+let shouldExit = false;
+
+process.on('SIGINT', function () {
+  console.log('Caught interrupt signal');
+  if (isExcelFnRunning === false) {
+    console.log('ExcelFN is not running.. shuting down!');
+    process.exit();
+  } else {
+    console.log('ExcelFN is running will shutdown soon..');
+    shouldExit = true;
+  }
+});
+
+async function writeRow(rowNumber, rowData, excelFileName) {
+  isExcelFnRunning = true;
   console.log('row data to write', rowData);
   //   const workbook = new Excel.Workbook();
   //   const worksheet = workbook.addWorksheet('My Sheet');
@@ -19,7 +37,7 @@ async function writeRow(rowNumber, rowData) {
 
   //load a copy of export.xlsx
   const newWorkbook = new Excel.Workbook();
-  await newWorkbook.xlsx.readFile('demo.xlsx');
+  await newWorkbook.xlsx.readFile(config.excelFilePath);
 
   const newworksheet = newWorkbook.getWorksheet('Φύλλο1');
 
@@ -31,7 +49,8 @@ async function writeRow(rowNumber, rowData) {
 
   curRow.commit();
 
-  await newWorkbook.xlsx.writeFile('demo.xlsx');
+  await newWorkbook.xlsx.writeFile(config.excelFilePath);
+
   //   console.log(testRow);
   //   newworksheet.columns = [
   //     { header: 'Id', key: 'id', width: 10 },
@@ -46,13 +65,20 @@ async function writeRow(rowNumber, rowData) {
   //   });
 
   //   await newWorkbook.xlsx.writeFile('export2.xlsx');
-
-  return console.log(`Row ${rowNumber} was written`);
+  console.log(`Row ${rowNumber} was written`);
+  isExcelFnRunning = false;
+  if (shouldExit === false) {
+    return;
+  } else {
+    console.log('Killing process! Goodbye!');
+    process.exit(100);
+  }
 }
 
 async function getCellValue(cell) {
+  isExcelFnRunning = true;
   const newWorkbook = new Excel.Workbook();
-  await newWorkbook.xlsx.readFile('demo.xlsx');
+  await newWorkbook.xlsx.readFile(config.excelFilePath);
 
   const newworksheet = newWorkbook.getWorksheet('Φύλλο1');
   return newworksheet.getCell(cell).value;
