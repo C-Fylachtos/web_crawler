@@ -1,9 +1,9 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const { performance } = require('perf_hooks');
-const config = require('./config.json');
-const excel = require('./excel');
 
+const excel = require('./excel');
+const config = JSON.parse(fs.readFileSync('./config.json'));
 // Ignore Control+C from this file
 process.on('SIGINT', function () {});
 

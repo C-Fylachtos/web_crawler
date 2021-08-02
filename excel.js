@@ -1,8 +1,18 @@
 const Excel = require('exceljs');
-const config = require('./config.json');
-// log_in(config.username, config.password);
-console.log('configgg', config);
+const fs = require('fs');
 
+let config;
+try {
+  const jsonString = fs.readFileSync('./config.json');
+  config = JSON.parse(jsonString);
+} catch (err) {
+  console.log(err);
+  return;
+}
+
+// const config = JSON.stringify(JSON.parse(fs.readFileSync('./config.json')));
+
+console.log('conf', config);
 let isExcelFnRunning = false;
 let shouldExit = false;
 
@@ -20,22 +30,7 @@ process.on('SIGINT', function () {
 async function writeRow(rowNumber, rowData, excelFileName) {
   isExcelFnRunning = true;
   console.log('row data to write', rowData);
-  //   const workbook = new Excel.Workbook();
-  //   const worksheet = workbook.addWorksheet('My Sheet');
 
-  //   worksheet.columns = [
-  //     { header: 'Id', key: 'id', width: 10 },
-  //     { header: 'Name', key: 'name', width: 32 },
-  //     { header: 'D.O.B.', key: 'dob', width: 15 },
-  //   ];
-
-  //   worksheet.addRow({ id: 1, name: 'John Doe', dob: new Date(1970, 1, 1) });
-  //   worksheet.addRow({ id: 2, name: 'Jane Doe', dob: new Date(1965, 1, 7) });
-
-  // save under export.xlsx
-  //   await workbook.xlsx.writeFile('export.xlsx');
-
-  //load a copy of export.xlsx
   const newWorkbook = new Excel.Workbook();
   await newWorkbook.xlsx.readFile(config.excelFilePath);
 
@@ -51,20 +46,6 @@ async function writeRow(rowNumber, rowData, excelFileName) {
 
   await newWorkbook.xlsx.writeFile(config.excelFilePath);
 
-  //   console.log(testRow);
-  //   newworksheet.columns = [
-  //     { header: 'Id', key: 'id', width: 10 },
-  //     { header: 'Name', key: 'name', width: 32 },
-  //     { header: 'D.O.B.', key: 'dob', width: 15 },
-  //   ];
-
-  //   await newworksheet.addRow({
-  //     id: 3,
-  //     name: 'New Guy',
-  //     dob: new Date(2000, 1, 1),
-  //   });
-
-  //   await newWorkbook.xlsx.writeFile('export2.xlsx');
   console.log(`Row ${rowNumber} was written`);
   isExcelFnRunning = false;
   if (shouldExit === false) {

@@ -9,3 +9,7 @@ backup/
 excels/
 
 executables/
+
+config.json
+config.json
+.gitignore

@@ -3,7 +3,7 @@
     "backUpPath": "backup/",
     "backupFilePath": "backup/demo.xlsx",
     "backupAfter": 50,
-    "startingPosition": 22,
+    "startingPosition": 88,
     "endingPosition": 9999,
     "findUrl": 0
 }
