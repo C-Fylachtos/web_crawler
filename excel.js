@@ -13,9 +13,15 @@ try {
 // const config = JSON.stringify(JSON.parse(fs.readFileSync('./config.json')));
 
 console.log('conf', config);
-let isExcelFnRunning = false;
+let isExcelFnRunning = true;
 let shouldExit = false;
 
+process.on('SIGKILL', function () {
+  console.log('CAUGHT KILL SIGNAL');
+});
+process.on('SIGTERM', function () {
+  console.log('CAUGHT KILL SIGNAL');
+});
 process.on('SIGINT', function () {
   console.log('Caught interrupt signal');
   if (isExcelFnRunning === false) {
@@ -39,7 +45,8 @@ async function writeRow(rowNumber, rowData, excelFileName) {
   const curRow = newworksheet.getRow(rowNumber);
   rowData.forEach((cell) => {
     console.log('row', rowNumber, 'cell', cell, 'val', cell.value);
-    return (curRow.getCell(cell.number).value = cell.value);
+    curRow.getCell(cell.number).value = cell.value;
+    return;
   });
 
   curRow.commit();
@@ -47,7 +54,7 @@ async function writeRow(rowNumber, rowData, excelFileName) {
   await newWorkbook.xlsx.writeFile(config.excelFilePath);
 
   console.log(`Row ${rowNumber} was written`);
-  isExcelFnRunning = false;
+
   if (shouldExit === false) {
     return;
   } else {

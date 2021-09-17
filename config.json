@@ -3,7 +3,9 @@
     "backUpPath": "backup/",
     "backupFilePath": "backup/demo.xlsx",
     "backupAfter": 50,
-    "startingPosition": 88,
+    "startingPosition": 1,
     "endingPosition": 9999,
-    "findUrl": 0
+    "findUrl": 0,
+    "avgRoundTime": 2,
+    "myShopName": "AR Pharmacy" 
 }

@@ -5,19 +5,32 @@ const { performance } = require('perf_hooks');
 const excel = require('./excel');
 const config = JSON.parse(fs.readFileSync('./config.json'));
 // Ignore Control+C from this file
-process.on('SIGINT', function () {});
+// process.on('SIGINT', function () {});
 
 let index = 1;
 let endVal = 9999;
 let $anchor;
 let text;
 let timesRan = 0;
+let avgRoundTime = 13;
 
+// AR Pharmacy , PlayOclock
+let brandName = 'AR Pharmacy';
+if(config && config.myShopName){
+  brandName = config.myShopName;
+}
+console.log("ShopName:" , brandName);
 const URLS = 'https://www.skroutz.gr';
 const t0 = performance.now();
 
 let execTimes = [];
 let timeStamps = [];
+
+if (config && config.avgRoundTime) {
+  avgRoundTime = config.avgRoundTime;
+}
+
+console.log('Average round time: ', avgRoundTime);
 
 const searchUrls =
   process.argv.indexOf('-findurl') !== -1 || config.findUrl !== 0;
@@ -43,15 +56,12 @@ const backUpFile = () => {
   if (!fs.existsSync(config.backUpPath, { recursive: true })) {
     fs.mkdirSync(config.backUpPath);
   }
+  console.log('config  ', config.excelFilePath, config.backupFilePath);
   try {
-    fs.copyFileSync(config.excelFilePath, config.backupFilePath, (err) => {
-      if (err) {
-        console.log('Error while trying to backup', err);
-      }
-      console.log(
-        `${config.excelFilePath} was copied to ${config.backupFilePath}`
-      );
-    });
+    fs.copyFileSync(config.excelFilePath, config.backupFilePath);
+    console.log(
+      `${config.excelFilePath} was copied to ${config.backupFilePath}`
+    );
   } catch (err) {
     console.log('Error while trying to backup file', err);
   }
@@ -60,7 +70,7 @@ const backUpFile = () => {
 const crawl = () => {
   console.log('starting row is: ', index);
   console.log('Ending row is: ', endVal);
-  const rndWaitTime = Math.floor(Math.random() * 5000);
+  const rndWaitTime = Math.floor(Math.random() * (avgRoundTime / 3.5));
   // try {
   //   excel.writeRow(15, [
   //     { number: 3, value: 'testData3' },
@@ -244,7 +254,7 @@ async function getDataFromUrl() {
           .$eval('.shop-name', (el) => el.innerText)
           .catch((e) => console.log('error while getting shop name', e));
 
-        if (shopName !== 'AR Pharmacy') {
+        if (shopName !== brandName) {
           if (!foundSkroutzLowestPrice) {
             const hasMerchant = await shopCards2[i]
               .$eval('.has-two-button-sections', (el) => el.innerText)
@@ -292,12 +302,12 @@ async function getDataFromUrl() {
             }
           }
           // const has2sections = .has-two-button-sections
-        } else if (shopName === 'AR Pharmacy') {
+        } else if (shopName === brandName) {
           arPrice = await shopCards2[i]
             .$eval('.dominant-price', (el) => el.innerText)
             .catch((e) => console.log('error trying to get shop price'));
           if (arPrice !== 0 && arPrice !== undefined) {
-            console.log('sucess getting "AR Pharmacy" price', arPrice);
+            console.log(`sucess getting "${brandName}" price`, arPrice);
             foundArPrice = true;
           }
         }
@@ -321,7 +331,7 @@ async function getDataFromUrl() {
             value: arPrice !== 0 ? arPrice : 'Not found',
           });
           try {
-            excel.writeRow(index, excelRowData);
+            await excel.writeRow(index, excelRowData);
           } catch (e) {
             console.log('error while writing row', '\n', e);
           }
@@ -417,14 +427,14 @@ async function getUrlFromSku() {
 
     if (!productFinalURL) {
       try {
-        excel.writeRow(index, [{ number: 15, value: 'Not found' }]);
+        await excel.writeRow(index, [{ number: 15, value: 'Not found' }]);
       } catch (e) {
         console.log('error while writing row', '\n', e);
       }
       console.log('new URL -> Not Found');
     } else {
       try {
-        excel.writeRow(index, [{ number: 15, value: productFinalURL }]);
+        await excel.writeRow(index, [{ number: 15, value: productFinalURL }]);
       } catch (e) {
         console.log('error while writing row', '\n', e);
       }
@@ -452,7 +462,7 @@ async function autoScroll(page) {
   await page.evaluate(async () => {
     await new Promise((resolve, reject) => {
       var totalHeight = 0;
-      var distance = 600;
+      var distance = 1000;
       var timer = setInterval(() => {
         var scrollHeight = document.body.scrollHeight;
         window.scrollBy(0, distance);
@@ -490,9 +500,9 @@ async function timeLog() {
     ((performance.now() - t0) / 1000).toFixed(0),
     's'
   );
-  if (avg < 13 && arrLength > 1) {
-    console.log('avg less than 13 applying corrections');
-    const addedDelay = Math.random() * (13 - avg) * 2 + 2;
+  if (avg < avgRoundTime && arrLength > 1) {
+    console.log(`avg less than ${avrRoundTime} applying corrections`);
+    const addedDelay = Math.random() * (avgRoundTime - avg) * 2 + 2;
     console.log('added delay', addedDelay.toFixed(2), ' s');
     await new Promise((resolve) => setTimeout(resolve, addedDelay * 1000));
   }
