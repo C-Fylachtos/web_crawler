@@ -4,8 +4,9 @@
     "backupFilePath": "backup/demo.xlsx",
     "backupAfter": 50,
     "startingPosition": 1,
-    "endingPosition": 9999,
+    "endingPosition": 100,
     "findUrl": 0,
     "avgRoundTime": 2,
-    "myShopName": "AR Pharmacy" 
+    "myShopName": "AR Pharmacy" ,
+    "competitionNames": ["aa" , "bb" , "cc"]
 }

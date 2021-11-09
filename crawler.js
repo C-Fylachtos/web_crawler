@@ -13,13 +13,17 @@ let $anchor;
 let text;
 let timesRan = 0;
 let avgRoundTime = 13;
+let competitionNames = [];
+let competitionPrices = [];
+
+let urlsArray = [];
 
 // AR Pharmacy , PlayOclock
 let brandName = 'AR Pharmacy';
-if(config && config.myShopName){
+if (config && config.myShopName) {
   brandName = config.myShopName;
 }
-console.log("ShopName:" , brandName);
+
 const URLS = 'https://www.skroutz.gr';
 const t0 = performance.now();
 
@@ -27,10 +31,10 @@ let execTimes = [];
 let timeStamps = [];
 
 if (config && config.avgRoundTime) {
-  avgRoundTime = config.avgRoundTime;
+  avgRoundTime = +config.avgRoundTime;
 }
 
-console.log('Average round time: ', avgRoundTime);
+console.log('Average round time: ', typeof avgRoundTime, avgRoundTime);
 
 const searchUrls =
   process.argv.indexOf('-findurl') !== -1 || config.findUrl !== 0;
@@ -70,7 +74,18 @@ const backUpFile = () => {
 const crawl = () => {
   console.log('starting row is: ', index);
   console.log('Ending row is: ', endVal);
-  const rndWaitTime = Math.floor(Math.random() * (avgRoundTime / 3.5));
+  console.log('LENGTH', competitionNames.length);
+  if (config && config.competitionNames) {
+    competitionNames = config.competitionNames;
+  }
+  console.log('LENGTH', competitionNames.length);
+  competitionPrices = [];
+  getUrlsArray();
+  return;
+
+  const rndWaitTime = Math.floor(Math.random() * (+avgRoundTime / 3.5)).toFixed(
+    2
+  );
   // try {
   //   excel.writeRow(15, [
   //     { number: 3, value: 'testData3' },
@@ -99,6 +114,35 @@ const crawl = () => {
     }, rndWaitTime);
   }
 };
+
+async function getUrlsArray() {
+  let res = await excel.getUrlsArray(endVal);
+  console.log('RESULT?? ', res);
+  return res;
+
+  // let isSearchable;
+  // for (let i = 2; i++; i < +endVal + 1) {
+  //   isSearchable = await excel
+  //     .getCellValue(`N${i}`)
+  //     .then((val) => val === 'q')
+  //     .catch((e) => console.log('error while reading excel ', e));
+  //   console.log('is Q', isSearchable);
+
+  //   if (isSearchable) {
+  //     const newUrl = await excel
+  //       .getCellValue(`O${index}`)
+  //       .then((val) => val)
+  //       .catch((e) => console.log('error while reading excel ', e));
+  //     console.log('New URL', newUrl);
+  //     if (newUrl !== null) {
+  //       urlsArray.push({ indexNo: i, url: newUrl });
+  //     } else {
+  //       console.log(`Url  value at O${index} is Null`);
+  //     }
+  //   }
+  //   console.log('URL ARRAY ', urlsArray);
+  // }
+}
 
 async function getDataFromUrl() {
   const excelRowData = [];
@@ -167,7 +211,7 @@ async function getDataFromUrl() {
     const productTitle = await page
       .$eval('.page-title', (element) => element.innerText)
       .catch((e) => {
-        console.log('error while getting manufacturer');
+        console.log('error while getting Product title');
         return 'Not found';
       });
     excelRowData.push({ number: 2, value: productTitle });
@@ -197,7 +241,7 @@ async function getDataFromUrl() {
     const productRating = await page
       .$eval('[itemprop="ratingValue"]', (element) => element.innerText)
       .catch((e) => {
-        console.log('error while getting manufacturer');
+        console.log('error while getting product Rating');
         return 'Not found';
       });
 
@@ -207,7 +251,7 @@ async function getDataFromUrl() {
     const nbOfRatings = await page
       .$eval('.actual-rating ', (element) => element.innerText)
       .catch((e) => {
-        console.log('error while getting manufacturer');
+        console.log('error while getting nb of Ratings');
         return 'Not found';
       });
 
@@ -217,9 +261,18 @@ async function getDataFromUrl() {
     const mainImageUrl = await page
       .$eval('#sku-details  img', (element) => element.getAttribute('src'))
       .catch((e) => {
-        console.log('error while getting manufacturer');
+        console.log('error while getting main Image url');
         return 'Not found';
       });
+
+    const skuDescription = await page
+      .$eval('.sku-description', (element) => element.innerText)
+      .catch((e) => {
+        console.log('error while getting SKU description');
+        return 'Not found';
+      });
+
+    excelRowData.push({ number: 16, value: skuDescription });
 
     excelRowData.push({ number: 12, value: mainImageUrl });
 
@@ -310,10 +363,20 @@ async function getDataFromUrl() {
             console.log(`sucess getting "${brandName}" price`, arPrice);
             foundArPrice = true;
           }
+        } else if (competitionNames.indexOf(shopName) > -1) {
+          let tempPrice = await shopCards2[i]
+            .$eval('.dominant-price', (el) => el.innerText)
+            .catch((e) => console.log('error trying to get shop price'));
+          competitionPrices.push({ name: shopName, price: tempPrice });
+          let tempIndex = competitionNames.indexOf(shopName);
+          competitionNames.splice(tempIndex, 1);
         }
 
         if (
-          (foundLowestPrice && foundArPrice && foundSkroutzLowestPrice) ||
+          (foundLowestPrice &&
+            foundArPrice &&
+            foundSkroutzLowestPrice &&
+            competitionNames.length === 0) ||
           i === shopCards2.length - 1
         ) {
           console.log(`Found all prices stoping loop`);
@@ -330,6 +393,7 @@ async function getDataFromUrl() {
             number: 9,
             value: arPrice !== 0 ? arPrice : 'Not found',
           });
+          competitionPrices.sort((item1, item2) => item1.name > item2.name);
           try {
             await excel.writeRow(index, excelRowData);
           } catch (e) {
@@ -500,9 +564,9 @@ async function timeLog() {
     ((performance.now() - t0) / 1000).toFixed(0),
     's'
   );
-  if (avg < avgRoundTime && arrLength > 1) {
+  if (avg < +avgRoundTime && arrLength > 1) {
     console.log(`avg less than ${avrRoundTime} applying corrections`);
-    const addedDelay = Math.random() * (avgRoundTime - avg) * 2 + 2;
+    const addedDelay = (Math.random() * (+avgRoundTime - avg) * 2).toFixed(2);
     console.log('added delay', addedDelay.toFixed(2), ' s');
     await new Promise((resolve) => setTimeout(resolve, addedDelay * 1000));
   }
