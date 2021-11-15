@@ -16,13 +16,35 @@ let avgRoundTime = 13;
 let competitionNames = [];
 let competitionPrices = [];
 
+let saveAfter = 25;
+
+let competitionOrder = [];
+
 let urlsArray = [];
+let rowsArray = [];
+let ExcelRowsArray = [];
 
 // AR Pharmacy , PlayOclock
 let brandName = 'AR Pharmacy';
 if (config && config.myShopName) {
   brandName = config.myShopName;
 }
+
+if (config && config.saveAfter) {
+  saveAfter = +config.saveAfter;
+}
+
+const myConsole = new console.Console(fs.createWriteStream('./output-log.txt'));
+myConsole.log(`${new Date().toString()}`);
+myConsole.log('Hello World!');
+process.on('uncaughtException', function (err) {
+  myConsole.log(err);
+  console.log('Caught exception: ', err);
+});
+process.on('unhandledRejection', function (err) {
+  myConsole.log(err);
+  console.log('Caught exception: ', err);
+});
 
 const URLS = 'https://www.skroutz.gr';
 const t0 = performance.now();
@@ -71,21 +93,32 @@ const backUpFile = () => {
   }
 };
 
-const crawl = () => {
+const crawl = async () => {
   console.log('starting row is: ', index);
   console.log('Ending row is: ', endVal);
-  console.log('LENGTH', competitionNames.length);
+
   if (config && config.competitionNames) {
     competitionNames = config.competitionNames;
   }
-  console.log('LENGTH', competitionNames.length);
-  competitionPrices = [];
-  getUrlsArray();
-  return;
-
-  const rndWaitTime = Math.floor(Math.random() * (+avgRoundTime / 3.5)).toFixed(
-    2
+  competitionNames.sort((item1, item2) =>
+    item1 > item2 ? 1 : item1 < item2 ? -1 : 0
   );
+  competitionNames.map((el, i) => {
+    competitionOrder.push({ name: el, order: i + 1 });
+  });
+  if (competitionNames.length > 0) {
+    await excel.writeRowOld(
+      1,
+      competitionNames.map((el, i) => {
+        return { number: 17 + i, value: el };
+      })
+    );
+  }
+
+  competitionPrices = [];
+
+  const rndWaitTime = +Math.floor(Math.random() * (+avgRoundTime / 3.5));
+
   // try {
   //   excel.writeRow(15, [
   //     { number: 3, value: 'testData3' },
@@ -97,69 +130,55 @@ const crawl = () => {
   // excel.writeRow('234');
   if (searchUrls) {
     setTimeout(() => {
-      console.log(+index > +endVal);
+      // console.log(+index > +endVal);
       if (+index > +endVal) {
         return console.log('Finished successfully');
       } else {
         getUrlFromSku();
       }
-    }, rndWaitTime);
+    }, +rndWaitTime);
   } else {
-    setTimeout(() => {
-      if (+index > +endVal) {
-        return console.log('Finished successfully');
-      } else {
-        getDataFromUrl();
+    if (+index > +endVal) {
+      return console.log('Finished successfully');
+    } else {
+      urlsArray = await getUrlsArray();
+      for (let i = 0; i < urlsArray.length; i++) {
+        try {
+          await getDataFromUrl(
+            urlsArray[i].url,
+            urlsArray[i].indexNo,
+            i === urlsArray.length - 1
+          );
+        } catch (error) {
+          console.log(error);
+        }
       }
-    }, rndWaitTime);
+    }
   }
 };
 
 async function getUrlsArray() {
-  let res = await excel.getUrlsArray(endVal);
-  console.log('RESULT?? ', res);
-  return res;
+  let res = await excel.getUrlsArray(index, endVal);
 
-  // let isSearchable;
-  // for (let i = 2; i++; i < +endVal + 1) {
-  //   isSearchable = await excel
-  //     .getCellValue(`N${i}`)
+  return res;
+}
+
+async function getDataFromUrl(newUrl, index, isLastRow) {
+  const excelRowData = [];
+  const rndCommandWaitTime = Math.floor(Math.random() * 100);
+  // try {
+  //   const isSearchable = await excel
+  //     .getCellValue(`N${index}`)
   //     .then((val) => val === 'q')
   //     .catch((e) => console.log('error while reading excel ', e));
   //   console.log('is Q', isSearchable);
-
-  //   if (isSearchable) {
-  //     const newUrl = await excel
-  //       .getCellValue(`O${index}`)
-  //       .then((val) => val)
-  //       .catch((e) => console.log('error while reading excel ', e));
-  //     console.log('New URL', newUrl);
-  //     if (newUrl !== null) {
-  //       urlsArray.push({ indexNo: i, url: newUrl });
-  //     } else {
-  //       console.log(`Url  value at O${index} is Null`);
-  //     }
+  //   if (!isSearchable) {
+  //     index++;
+  //     return crawl();
   //   }
-  //   console.log('URL ARRAY ', urlsArray);
+  // } catch (e) {
+  //   console.log('Error while trying to read N', index);
   // }
-}
-
-async function getDataFromUrl() {
-  const excelRowData = [];
-  const rndCommandWaitTime = Math.floor(Math.random() * 100);
-  try {
-    const isSearchable = await excel
-      .getCellValue(`N${index}`)
-      .then((val) => val === 'q')
-      .catch((e) => console.log('error while reading excel ', e));
-    console.log('is Q', isSearchable);
-    if (!isSearchable) {
-      index++;
-      return crawl();
-    }
-  } catch (e) {
-    console.log('Error while trying to read N', index);
-  }
 
   const browser = await puppeteer.launch({
     ignoreDefaultArgs: ['--disable-extensions'],
@@ -176,11 +195,6 @@ async function getDataFromUrl() {
     // const browser = await puppeteer.launch();
     const page = await browser.newPage();
 
-    const newUrl = await excel
-      .getCellValue(`O${index}`)
-      .then((val) => val)
-      .catch((e) => console.log('error while reading excel ', e));
-    console.log('New URL', newUrl);
     if (newUrl !== null) {
       await page.goto(newUrl);
     } else {
@@ -298,6 +312,8 @@ async function getDataFromUrl() {
       let arPrice = 0;
       let price = 0;
       let shopName = '';
+      let tempCompNames = [...competitionNames];
+      competitionPrices = [];
 
       const shopCards2 = await page.$$('.js-product-card');
 
@@ -308,14 +324,31 @@ async function getDataFromUrl() {
           .catch((e) => console.log('error while getting shop name', e));
 
         if (shopName !== brandName) {
+          if (tempCompNames.indexOf(shopName) > -1) {
+            let tempPrice = await shopCards2[i]
+              .$eval('.dominant-price', (el) => el.innerText)
+              .catch((e) => {
+                return;
+              });
+            if (tempPrice !== null && tempPrice !== undefined) {
+              competitionPrices.push({ name: shopName, price: tempPrice });
+              let tempIndex = tempCompNames.indexOf(shopName);
+              tempCompNames.splice(tempIndex, 1);
+              console.log(`sucess getting ${shopName} price `, tempPrice);
+            }
+          }
           if (!foundSkroutzLowestPrice) {
             const hasMerchant = await shopCards2[i]
               .$eval('.has-two-button-sections', (el) => el.innerText)
-              .catch((e) => console.log('error trying to get shop price'));
+              .catch((e) => {
+                return;
+              });
             if (hasMerchant) {
               skroutzPrice = await shopCards2[i]
                 .$eval('.dominant-price', (el) => el.innerText)
-                .catch((e) => console.log('error trying to get shop price'));
+                .catch((e) => {
+                  return;
+                });
               if (skroutzPrice !== 0 && skroutzPrice !== undefined) {
                 console.log('sucess getting skroutz price ', skroutzPrice);
                 foundSkroutzLowestPrice = true;
@@ -327,7 +360,9 @@ async function getDataFromUrl() {
             } else {
               const isOnlySkroutz = await shopCards2[i]
                 .$eval('.price-content-ecommerce', (el) => el.innerText)
-                .catch((e) => console.log('error trying to get shop price'));
+                .catch((e) => {
+                  return;
+                });
               if (isOnlySkroutz !== undefined) {
                 skroutzPrice = await shopCards2[i]
                   .$eval('.dominant-price', (el) => el.innerText)
@@ -348,7 +383,9 @@ async function getDataFromUrl() {
           if (!foundLowestPrice) {
             price = await shopCards2[i]
               .$eval('.dominant-price', (el) => el.innerText)
-              .catch((e) => console.log('error trying to get shop price'));
+              .catch((e) => {
+                return;
+              });
             if (price !== 0 && price !== undefined) {
               console.log('sucess getting price ', price);
               foundLowestPrice = true;
@@ -358,28 +395,23 @@ async function getDataFromUrl() {
         } else if (shopName === brandName) {
           arPrice = await shopCards2[i]
             .$eval('.dominant-price', (el) => el.innerText)
-            .catch((e) => console.log('error trying to get shop price'));
+            .catch((e) => {
+              return;
+            });
           if (arPrice !== 0 && arPrice !== undefined) {
             console.log(`sucess getting "${brandName}" price`, arPrice);
             foundArPrice = true;
           }
-        } else if (competitionNames.indexOf(shopName) > -1) {
-          let tempPrice = await shopCards2[i]
-            .$eval('.dominant-price', (el) => el.innerText)
-            .catch((e) => console.log('error trying to get shop price'));
-          competitionPrices.push({ name: shopName, price: tempPrice });
-          let tempIndex = competitionNames.indexOf(shopName);
-          competitionNames.splice(tempIndex, 1);
         }
 
         if (
           (foundLowestPrice &&
             foundArPrice &&
             foundSkroutzLowestPrice &&
-            competitionNames.length === 0) ||
+            tempCompNames.length === 0) ||
           i === shopCards2.length - 1
         ) {
-          console.log(`Found all prices stoping loop`);
+          console.log(`Found all prices or searched all shops *stoping loop*`);
           i = shopCards2.length;
           excelRowData.push({
             number: 7,
@@ -393,9 +425,42 @@ async function getDataFromUrl() {
             number: 9,
             value: arPrice !== 0 ? arPrice : 'Not found',
           });
-          competitionPrices.sort((item1, item2) => item1.name > item2.name);
+
+          competitionPrices.sort((item1, item2) =>
+            item1.name > item2.name ? 1 : -1
+          );
+          if (competitionPrices.length > 0) {
+            competitionPrices.map((el) => {
+              let tempIndex = -1;
+              competitionOrder.map((el2, i) => {
+                if (el2.name === el.name) {
+                  tempIndex = el2.order;
+                }
+              });
+
+              excelRowData.push({ number: 16 + tempIndex, value: el.price });
+            });
+          }
+
           try {
-            await excel.writeRow(index, excelRowData);
+            // await excel.writeRow(index, excelRowData);
+            rowsArray = [];
+            excelRowData.map((row) => {
+              rowsArray.push({
+                row: index,
+                number: row.number,
+                value: row.value,
+              });
+            });
+            ExcelRowsArray.push({
+              row: index,
+              data: rowsArray,
+            });
+
+            if (ExcelRowsArray.length === +saveAfter || isLastRow) {
+              await excel.writeRow(ExcelRowsArray, 'Φύλλο1');
+              ExcelRowsArray = [];
+            }
           } catch (e) {
             console.log('error while writing row', '\n', e);
           }
@@ -410,14 +475,10 @@ async function getDataFromUrl() {
     if (timesRan % config.backupAfter === 0) {
       backUpFile();
     }
-    index++;
-    crawl();
   } catch (error) {
     await browser.close();
     console.error(error);
     await timeLog();
-    index++;
-    crawl();
   }
 }
 
@@ -491,14 +552,16 @@ async function getUrlFromSku() {
 
     if (!productFinalURL) {
       try {
-        await excel.writeRow(index, [{ number: 15, value: 'Not found' }]);
+        await excel.writeRowOld(index, [{ number: 15, value: 'Not found' }]);
       } catch (e) {
         console.log('error while writing row', '\n', e);
       }
       console.log('new URL -> Not Found');
     } else {
       try {
-        await excel.writeRow(index, [{ number: 15, value: productFinalURL }]);
+        await excel.writeRowOld(index, [
+          { number: 15, value: productFinalURL },
+        ]);
       } catch (e) {
         console.log('error while writing row', '\n', e);
       }
@@ -551,7 +614,7 @@ async function timeLog() {
   const now = performance.now();
   const arrLength = timeStamps.length;
   const prevTimeStamp = arrLength >= 1 ? timeStamps[arrLength - 1] : 0;
-  const cycleTime = (now / 1000 - prevTimeStamp).toFixed(0);
+  const cycleTime = (now / 1000 - +prevTimeStamp).toFixed(0);
   const avg = average(execTimes).toFixed(2);
   execTimes.push(cycleTime);
 
@@ -565,11 +628,11 @@ async function timeLog() {
     's'
   );
   if (avg < +avgRoundTime && arrLength > 1) {
-    console.log(`avg less than ${avrRoundTime} applying corrections`);
-    const addedDelay = (Math.random() * (+avgRoundTime - avg) * 2).toFixed(2);
+    console.log(`avg less than ${avgRoundTime} applying corrections`);
+    const addedDelay = Math.random() * Math.abs(+avgRoundTime - avg) * 3 + 1;
     console.log('added delay', addedDelay.toFixed(2), ' s');
     await new Promise((resolve) => setTimeout(resolve, addedDelay * 1000));
   }
 }
 
-console.log(crawl());
+crawl();

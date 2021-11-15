@@ -3,10 +3,11 @@
     "backUpPath": "backup/",
     "backupFilePath": "backup/demo.xlsx",
     "backupAfter": 50,
-    "startingPosition": 1,
-    "endingPosition": 100,
+    "saveAfter": 10,
+    "startingPosition": 10,
+    "endingPosition": 41,
     "findUrl": 0,
-    "avgRoundTime": 2,
+    "avgRoundTime": 7,
     "myShopName": "AR Pharmacy" ,
-    "competitionNames": ["aa" , "bb" , "cc"]
+    "competitionNames": ["Easy-pharmacy" , "Pharm24" , "CareSpot"]
 }

@@ -16,26 +16,26 @@ console.log('conf', config);
 let isExcelFnRunning = true;
 let shouldExit = false;
 
-process.on('SIGKILL', function () {
-  console.log('CAUGHT KILL SIGNAL');
-});
-process.on('SIGTERM', function () {
-  console.log('CAUGHT KILL SIGNAL');
-});
-process.on('SIGINT', function () {
-  console.log('Caught interrupt signal');
-  if (isExcelFnRunning === false) {
-    console.log('ExcelFN is not running.. shuting down!');
-    process.exit();
-  } else {
-    console.log('ExcelFN is running will shutdown soon..');
-    shouldExit = true;
-  }
-});
+// process.on('SIGKILL', function () {
+//   console.log('CAUGHT KILL SIGNAL');
+// });
+// process.on('SIGTERM', function () {
+//   console.log('CAUGHT KILL SIGNAL');
+// });
+// process.on('SIGINT', function () {
+//   console.log('Caught interrupt signal');
+//   if (isExcelFnRunning === false) {
+//     console.log('ExcelFN is not running.. shuting down!');
+//     process.exit();
+//   } else {
+//     console.log('ExcelFN is running will shutdown soon..');
+//     shouldExit = true;
+//   }
+// });
 
-async function writeRow(rowNumber, rowData, excelFileName) {
-  isExcelFnRunning = true;
-  console.log('row data to write', rowData);
+async function writeRowOld(rowNumber, rowData, excelFileName) {
+  // isExcelFnRunning = true;
+  // console.log('row data to write', rowData);
 
   const newWorkbook = new Excel.Workbook();
   await newWorkbook.xlsx.readFile(config.excelFilePath);
@@ -55,15 +55,17 @@ async function writeRow(rowNumber, rowData, excelFileName) {
 
   console.log(`Row ${rowNumber} was written`);
 
-  if (shouldExit === false) {
-    return;
-  } else {
-    console.log('Killing process! Goodbye!');
-    process.exit(100);
-  }
+  // if (shouldExit === false) {
+  //   return;
+  // } else {
+  //   console.log('Killing process! Goodbye!');
+  //   process.exit(100);
+  // }
 }
 
 async function writeRow(rowData, sheetName, firstRow = false) {
+  // console.log(rowData, sheetName);
+  rowData[0].data.map((el) => console.log(el));
   // console.log(
   //   "row data to write",
   //   rowData,
@@ -76,29 +78,19 @@ async function writeRow(rowData, sheetName, firstRow = false) {
   // );
 
   const newWorkbook = new Excel.Workbook();
-  let newworksheet;
-  // let tempBook;
-  // if (!firstRow) {
-  //   try {
-  //     tempBook = await newWorkbook.xlsx.readFile("./files/metadata.xlsx");
-  //   } catch (err) {
-  //     console.log("error while trying to read excel", err);
-  //   }
-  //   if (!tempBook) {
-  //     return await generateExcel();
-  //   }
-  // }
+  await newWorkbook.xlsx.readFile(config.excelFilePath);
+  let newworksheet = newWorkbook.getWorksheet(sheetName);
 
   try {
-    if (!firstRow) {
-      await newWorkbook.xlsx.readFile('./files/metadata.xlsx');
-      newworksheet = newWorkbook.getWorksheet(sheetName);
-      if (newworksheet === undefined) {
-        newworksheet = newWorkbook.addWorksheet(sheetName);
-      }
-    } else {
-      newworksheet = newWorkbook.addWorksheet(sheetName);
-    }
+    // if (!firstRow) {
+    //   await newWorkbook.xlsx.readFile(config.excelFilePath);
+    //   newworksheet = newWorkbook.getWorksheet(sheetName);
+    //   if (newworksheet === undefined) {
+    //     newworksheet = newWorkbook.addWorksheet(sheetName);
+    //   }
+    // } else {
+    //   newworksheet = newWorkbook.addWorksheet(sheetName);
+    // }
     await Promise.all(
       rowData.map(async (currentRow) => {
         const curRow = newworksheet.getRow(+currentRow.row);
@@ -109,7 +101,7 @@ async function writeRow(rowData, sheetName, firstRow = false) {
 
         curRow.commit();
 
-        await newWorkbook.xlsx.writeFile('./files/metadata.xlsx');
+        await newWorkbook.xlsx.writeFile(config.excelFilePath);
 
         console.log(`Row ${currentRow.row} was written`);
       })
@@ -128,7 +120,7 @@ async function getCellValue(cell) {
   return newworksheet.getCell(cell).value;
 }
 
-async function getUrlsArray(endVal) {
+async function getUrlsArray(startPos, endVal) {
   const urlsArray = [];
   const newWorkbook = new Excel.Workbook();
   await newWorkbook.xlsx.readFile(config.excelFilePath);
@@ -136,7 +128,7 @@ async function getUrlsArray(endVal) {
   const newworksheet = newWorkbook.getWorksheet('Φύλλο1');
   // newworksheet.getCell(cell).value;
   let isSearchable;
-  for (let i = 2; i < +endVal + 1; i++) {
+  for (let i = +startPos; i < +endVal + 1; i++) {
     try {
       let tempCellVal = newworksheet.getCell(`N${i}`).value;
       isSearchable = tempCellVal === 'q';
@@ -164,12 +156,12 @@ async function getUrlsArray(endVal) {
         console.log(`Url  value at O${i} is Null`);
       }
     }
-    console.log('URL ARRAY ', urlsArray);
   }
   return urlsArray;
 }
 
 module.exports = {
+  writeRowOld,
   writeRow,
   getCellValue,
   getUrlsArray,
