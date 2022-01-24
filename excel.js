@@ -109,12 +109,11 @@ async function writeRow(rowData, sheetName, firstRow = false) {
 
         curRow.commit();
 
-        await newWorkbook.xlsx.writeFile(config.excelFilePath);
-
         console.log(`Row ${currentRow.row} was written`);
         myConsole.log(`Row ${currentRow.row} was written`);
       })
     );
+    await newWorkbook.xlsx.writeFile(config.excelFilePath);
   } catch (err) {
     console.log('Error while trying to write row: ', err);
     myConsole.log('Error while trying to write row: ', err);

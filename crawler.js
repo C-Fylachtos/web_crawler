@@ -344,7 +344,7 @@ async function getDataFromUrl(newUrl, index, isLastRow) {
               competitionPrices.push({ name: shopName, price: tempPrice });
               let tempIndex = tempCompNames.indexOf(shopName);
               tempCompNames.splice(tempIndex, 1);
-              console.log(`sucess getting ${shopName} price `, tempPrice);
+              console.log(`Success getting ${shopName} price `, tempPrice);
             }
           }
           if (!foundSkroutzLowestPrice) {
@@ -360,7 +360,7 @@ async function getDataFromUrl(newUrl, index, isLastRow) {
                   return;
                 });
               if (skroutzPrice !== 0 && skroutzPrice !== undefined) {
-                console.log('sucess getting skroutz price ', skroutzPrice);
+                console.log('Success getting skroutz price ', skroutzPrice);
                 foundSkroutzLowestPrice = true;
                 if (!foundLowestPrice) {
                   price = skroutzPrice;
@@ -380,7 +380,7 @@ async function getDataFromUrl(newUrl, index, isLastRow) {
                     console.log('error trying to get skroutz price')
                   );
                 if (skroutzPrice !== 0 && skroutzPrice !== undefined) {
-                  console.log('sucess getting skroutz price ', skroutzPrice);
+                  console.log('Success getting skroutz price ', skroutzPrice);
                   foundSkroutzLowestPrice = true;
                   if (!foundLowestPrice) {
                     price = skroutzPrice;
@@ -397,7 +397,7 @@ async function getDataFromUrl(newUrl, index, isLastRow) {
                 return;
               });
             if (price !== 0 && price !== undefined) {
-              console.log('sucess getting price ', price);
+              console.log('Success getting price ', price);
               foundLowestPrice = true;
             }
           }
@@ -409,7 +409,7 @@ async function getDataFromUrl(newUrl, index, isLastRow) {
               return;
             });
           if (arPrice !== 0 && arPrice !== undefined) {
-            console.log(`sucess getting "${brandName}" price`, arPrice);
+            console.log(`Success getting "${brandName}" price`, arPrice);
             foundArPrice = true;
           }
         }
@@ -474,6 +474,7 @@ async function getDataFromUrl(newUrl, index, isLastRow) {
           } catch (e) {
             myConsole.log('error while writing row', '\n', e);
             console.log('error while writing row', '\n', e);
+            process.exit(101);
           }
         }
       }
@@ -566,6 +567,7 @@ async function getUrlFromSku() {
       try {
         await excel.writeRowOld(index, [{ number: 15, value: 'Not found' }]);
       } catch (e) {
+        myConsole.log('error while writing row', '\n', e);
         console.log('error while writing row', '\n', e);
       }
       console.log('new URL -> Not Found');
@@ -576,6 +578,7 @@ async function getUrlFromSku() {
         ]);
       } catch (e) {
         console.log('error while writing row', '\n', e);
+        myConsole.log('error while writing row', '\n', e);
       }
       console.log('new txt', productFinalURL);
     }
@@ -636,13 +639,14 @@ async function timeLog() {
   console.log('Average Cycle Time: ', avg, 's');
   console.log('This Cycle Runtime: ', cycleTime, 's');
   console.log(
-    'Total Runtime: ',
+    'Total Runtime:      ',
     ((performance.now() - t0) / 1000).toFixed(0),
     's'
   );
   if (avg < +avgRoundTime && arrLength > 1) {
     console.log(`Avg Less Than ${avgRoundTime} applying corrections`);
-    const addedDelay = Math.random() * Math.abs(+avgRoundTime - avg) * 3 + 1;
+    const addedDelay =
+      Math.random() * Math.abs(+avgRoundTime - avg) * 4 + 3 * Math.random;
     console.log('Added Delay: ', addedDelay.toFixed(2), ' s');
     await new Promise((resolve) => setTimeout(resolve, addedDelay * 1000));
   }
