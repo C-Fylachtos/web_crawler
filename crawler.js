@@ -421,7 +421,7 @@ async function getDataFromUrl(newUrl, index, isLastRow) {
             tempCompNames.length === 0) ||
           i === shopCards2.length - 1
         ) {
-          console.log(`Found all prices or searched all shops *stoping loop*`);
+          console.log(`Found all prices or crawled all shops *stoping loop*`);
           i = shopCards2.length;
           excelRowData.push({
             number: 7,
