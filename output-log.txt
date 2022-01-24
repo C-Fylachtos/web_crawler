@@ -1,2 +1,8 @@
-Mon Nov 15 2021 22:23:41 GMT+0200 (GMT+02:00)
+Mon Jan 24 2022 19:11:28 GMT+0200 (GMT+02:00)
 Hello World!
+error while writing row 
+ Error: Corrupted zip or bug: expected 16 records in central dir, got 0
+    at ZipEntries.readCentralDir (C:\snapshot\web crawler\node_modules\jszip\lib\zipEntries.js:146:23)
+    at ZipEntries.load (C:\snapshot\web crawler\node_modules\jszip\lib\zipEntries.js:257:14)
+    at C:\snapshot\web crawler\node_modules\jszip\lib\load.js:48:24
+    at process._tickCallback (internal/process/next_tick.js:68:7)

@@ -2,6 +2,7 @@ const Excel = require('exceljs');
 const fs = require('fs');
 
 let config;
+let sheetName = '';
 try {
   const jsonString = fs.readFileSync('./config.json');
   config = JSON.parse(jsonString);
@@ -9,12 +10,19 @@ try {
   console.log(err);
   return;
 }
-
+if (config && config.sheetName) {
+  sheetName = config.sheetName;
+}
+const myConsole = new console.Console(
+  fs.createWriteStream('./output-log-excel.txt')
+);
+myConsole.log(`${new Date().toString()}`);
+myConsole.log('Hello World Excel!');
 // const config = JSON.stringify(JSON.parse(fs.readFileSync('./config.json')));
 
 console.log('conf', config);
-let isExcelFnRunning = true;
-let shouldExit = false;
+// let isExcelFnRunning = true;
+// let shouldExit = false;
 
 // process.on('SIGKILL', function () {
 //   console.log('CAUGHT KILL SIGNAL');
@@ -40,7 +48,7 @@ async function writeRowOld(rowNumber, rowData, excelFileName) {
   const newWorkbook = new Excel.Workbook();
   await newWorkbook.xlsx.readFile(config.excelFilePath);
 
-  const newworksheet = newWorkbook.getWorksheet('Φύλλο1');
+  const newworksheet = newWorkbook.getWorksheet(sheetName);
 
   const curRow = newworksheet.getRow(rowNumber);
   rowData.forEach((cell) => {
@@ -104,10 +112,14 @@ async function writeRow(rowData, sheetName, firstRow = false) {
         await newWorkbook.xlsx.writeFile(config.excelFilePath);
 
         console.log(`Row ${currentRow.row} was written`);
+        myConsole.log(`Row ${currentRow.row} was written`);
       })
     );
   } catch (err) {
     console.log('Error while trying to write row: ', err);
+    myConsole.log('Error while trying to write row: ', err);
+    myConsole.log('Row Data Before Error: ', JSON.stringify(rowData));
+    process.exit(101);
   }
 }
 
@@ -116,7 +128,7 @@ async function getCellValue(cell) {
   const newWorkbook = new Excel.Workbook();
   await newWorkbook.xlsx.readFile(config.excelFilePath);
 
-  const newworksheet = newWorkbook.getWorksheet('Φύλλο1');
+  const newworksheet = newWorkbook.getWorksheet(sheetName);
   return newworksheet.getCell(cell).value;
 }
 
@@ -125,7 +137,7 @@ async function getUrlsArray(startPos, endVal) {
   const newWorkbook = new Excel.Workbook();
   await newWorkbook.xlsx.readFile(config.excelFilePath);
 
-  const newworksheet = newWorkbook.getWorksheet('Φύλλο1');
+  const newworksheet = newWorkbook.getWorksheet(sheetName);
   // newworksheet.getCell(cell).value;
   let isSearchable;
   for (let i = +startPos; i < +endVal + 1; i++) {
@@ -134,6 +146,7 @@ async function getUrlsArray(startPos, endVal) {
       isSearchable = tempCellVal === 'q';
     } catch (e) {
       console.log('error while reading excel ', e);
+      myConsole.log('error while reading excel ', e);
     }
     console.log('is Q', isSearchable);
 

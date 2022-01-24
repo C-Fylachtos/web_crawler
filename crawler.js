@@ -19,6 +19,7 @@ let competitionPrices = [];
 let saveAfter = 25;
 
 let competitionOrder = [];
+let sheetName = '';
 
 let urlsArray = [];
 let rowsArray = [];
@@ -100,6 +101,9 @@ const crawl = async () => {
   if (config && config.competitionNames) {
     competitionNames = config.competitionNames;
   }
+  if (config && config.sheetName) {
+    sheetName = config.sheetName;
+  }
   competitionNames.sort((item1, item2) =>
     item1 > item2 ? 1 : item1 < item2 ? -1 : 0
   );
@@ -150,6 +154,7 @@ const crawl = async () => {
             i === urlsArray.length - 1
           );
         } catch (error) {
+          myConsole.log(error);
           console.log(error);
         }
       }
@@ -165,7 +170,7 @@ async function getUrlsArray() {
 
 async function getDataFromUrl(newUrl, index, isLastRow) {
   const excelRowData = [];
-  const rndCommandWaitTime = Math.floor(Math.random() * 100);
+  // const rndCommandWaitTime = Math.floor(Math.random() * 100);
   // try {
   //   const isSearchable = await excel
   //     .getCellValue(`N${index}`)
@@ -207,7 +212,12 @@ async function getDataFromUrl(newUrl, index, isLastRow) {
 
     await autoScroll(page);
 
-    const Navs = await page.$eval('#nav', (element) => element.innerText);
+    const Navs = await page
+      .$eval('#nav', (element) => element.innerText)
+      .catch((e) => {
+        console.log('error while getting Navs');
+        return 'Not found';
+      });
     const objNavs = Navs.split('\n');
     console.log(Navs, 'obj');
 
@@ -458,10 +468,11 @@ async function getDataFromUrl(newUrl, index, isLastRow) {
             });
 
             if (ExcelRowsArray.length === +saveAfter || isLastRow) {
-              await excel.writeRow(ExcelRowsArray, 'Φύλλο1');
+              await excel.writeRow(ExcelRowsArray, sheetName);
               ExcelRowsArray = [];
             }
           } catch (e) {
+            myConsole.log('error while writing row', '\n', e);
             console.log('error while writing row', '\n', e);
           }
         }
@@ -478,6 +489,7 @@ async function getDataFromUrl(newUrl, index, isLastRow) {
   } catch (error) {
     await browser.close();
     console.error(error);
+    myConsole.log(error);
     await timeLog();
   }
 }
@@ -618,19 +630,20 @@ async function timeLog() {
   const avg = average(execTimes).toFixed(2);
   execTimes.push(cycleTime);
 
-  timeStamps.push((now - prevTimeStamp) / 1000).toFixed(0);
+  timeStamps.push(now / 1000).toFixed(0);
 
-  console.log('average cycle time: ', avg, 's');
-  console.log('This cycle runtime: ', cycleTime, 's');
+  console.log('Cycle #', timesRan + 1);
+  console.log('Average Cycle Time: ', avg, 's');
+  console.log('This Cycle Runtime: ', cycleTime, 's');
   console.log(
     'Total Runtime: ',
     ((performance.now() - t0) / 1000).toFixed(0),
     's'
   );
   if (avg < +avgRoundTime && arrLength > 1) {
-    console.log(`avg less than ${avgRoundTime} applying corrections`);
+    console.log(`Avg Less Than ${avgRoundTime} applying corrections`);
     const addedDelay = Math.random() * Math.abs(+avgRoundTime - avg) * 3 + 1;
-    console.log('added delay', addedDelay.toFixed(2), ' s');
+    console.log('Added Delay: ', addedDelay.toFixed(2), ' s');
     await new Promise((resolve) => setTimeout(resolve, addedDelay * 1000));
   }
 }
