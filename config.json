@@ -9,5 +9,6 @@
     "findUrl": 0,
     "avgRoundTime": 7,
     "myShopName": "AR Pharmacy" ,
-    "competitionNames": ["Easy-pharmacy" , "Pharm24" , "CareSpot"]
+    "competitionNames": ["Easy-pharmacy" , "Pharm24" , "CareSpot"],
+    "sheetName": "sheet1"
 }

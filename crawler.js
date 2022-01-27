@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const { performance } = require('perf_hooks');
+const prettyMilliseconds = require('pretty-ms');
 
 const excel = require('./excel');
 const config = JSON.parse(fs.readFileSync('./config.json'));
@@ -484,7 +485,7 @@ async function getDataFromUrl(newUrl, index, isLastRow) {
     await browser.close();
     await timeLog();
     timesRan += 1;
-    if (timesRan % config.backupAfter === 0) {
+    if (timesRan % config.backupAfter === 0 || isLastRow) {
       backUpFile();
     }
   } catch (error) {
@@ -640,9 +641,13 @@ async function timeLog() {
   console.log('This Cycle Runtime: ', cycleTime, 's');
   console.log(
     'Total Runtime:      ',
-    ((performance.now() - t0) / 1000).toFixed(0),
-    's'
+    prettyMilliseconds(performance.now() - t0, { verbose: true })
   );
+  // console.log(
+  //   'Total Runtime:      ',
+  //   ((performance.now() - t0) / 1000).toFixed(0),
+  //   's'
+  // );
   if (avg < +avgRoundTime && arrLength > 1) {
     console.log(`Avg Less Than ${avgRoundTime} applying corrections`);
     const addedDelay =
