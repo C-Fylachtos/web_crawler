@@ -651,9 +651,9 @@ async function timeLog() {
   if (avg < +avgRoundTime && arrLength > 1) {
     console.log(`Avg Less Than ${avgRoundTime} applying corrections`);
     const addedDelay =
-      Math.random() * Math.abs(+avgRoundTime - avg) * 4 + 3 * Math.random;
-    console.log('Added Delay: ', addedDelay.toFixed(2), ' s');
-    await new Promise((resolve) => setTimeout(resolve, addedDelay * 1000));
+      Math.random() * Math.abs(+avgRoundTime - avg) * 4 + 3 * Math.random();
+    console.log('Added Delay: ', +addedDelay.toFixed(2), ' s');
+    await new Promise((resolve) => setTimeout(resolve, +addedDelay * 1000));
   }
 }
 

@@ -13,3 +13,7 @@ executables/
 config.json
 config.json
 .gitignore
+
+crawler.exe
+
+*output*.txt
