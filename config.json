@@ -1,14 +1,14 @@
 {
-    "excelFilePath": "excels/demo.xlsx",
-    "backUpPath": "backup/",
-    "backupFilePath": "backup/demo.xlsx",
-    "backupAfter": 50,
-    "saveAfter": 10,
-    "startingPosition": 10,
-    "endingPosition": 7000,
-    "findUrl": 0,
-    "avgRoundTime": 7,
-    "myShopName": "AR Pharmacy" ,
-    "competitionNames": ["Easy-pharmacy" , "Pharm24" , "CareSpot"],
-    "sheetName": "sheet1"
+  "excelFilePath": "excels/demo.xlsx",
+  "backUpPath": "backup/",
+  "backupFilePath": "backup/demo.xlsx",
+  "backupAfter": 50,
+  "saveAfter": 10,
+  "startingPosition": 10,
+  "endingPosition": 100,
+  "findUrl": 0,
+  "avgRoundTime": 7,
+  "myShopName": "AR Pharmacy",
+  "competitionNames": ["Easy-pharmacy", "Pharm24", "CareSpot"],
+  "sheetName": "sheet1"
 }
